@@ -34,9 +34,11 @@ publish/
 ## --- OS ---
 .DS_Store
 Thumbs.db
-SetPoint.API/appsettings.Development.json
-/SetPoint.API/logs
-SetPoint.API/appsettings.json
-SetPoint.API/Dockerfile
-SetPoint.API/Properties/launchSettings.json
-SetPoint.API/SetPoint.http
+
+HabityFit.API/appsettings.Development.json
+/HabityFit.API/logs
+HabityFit.API/appsettings.json
+HabityFit.API/Dockerfile
+HabityFit.API/Properties/launchSettings.json
+HabityFit.API/HabityFit.http
+Dockerfile
