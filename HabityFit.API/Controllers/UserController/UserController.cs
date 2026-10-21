@@ -1,9 +1,9 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.RateLimiting;
-using HabityFit.API._2.Controllers.Common;
+﻿using HabityFit.API._2.Controllers.Common;
 using HabityFit.API.Common;
 using HabityFit.BLL._02.UsersManagement;
 using HabityFit.BLL._02.UsersManagement.Dto;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace HabityFit.API.Controllers
 {
@@ -53,6 +53,16 @@ namespace HabityFit.API.Controllers
                     });
 
                 return SuccessResponse(user, "Login successful.");
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                _logger.LogWarning(ex, "Unauthorized login attempt");
+                return Unauthorized(new ApiResponse
+                {
+                    WithError = true,
+                    Message = "Invalid credentials",
+                    StatusCode = 401
+                });
             }
             catch (Exception ex)
             {

@@ -1,9 +1,9 @@
 ﻿using AutoMapper;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
 using HabityFit.BLL._02.UsersManagement.Dto;
 using HabityFit.DAL._1.Entity;
 using HabityFit.DAL._2.Context;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace HabityFit.BLL._1.Security
 {
@@ -39,7 +39,7 @@ namespace HabityFit.BLL._1.Security
         public async Task<LoginResponseDto?> AuthenticateAsync(string email, string password)
         {
             if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(password))
-                throw new ArgumentException("Email and password must be provided.");
+                throw new UnauthorizedAccessException("Email and password must be provided.");
             var normalizedEmail = email.Trim().ToLower();
             // Verify user credentials
             var log = new Logs
