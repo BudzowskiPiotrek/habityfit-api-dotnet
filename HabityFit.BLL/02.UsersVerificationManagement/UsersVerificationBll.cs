@@ -22,6 +22,7 @@ namespace HabityFit.BLL._02.UsersVerificationManagement
         private readonly HabityFitDbContext _context;
         private readonly string _htmlBodyInvitation;
         private readonly string _htmlBodyAccept;
+        private const int MaxPendingInvitationsPerSender = 10;
         #endregion
 
 
@@ -85,13 +86,17 @@ namespace HabityFit.BLL._02.UsersVerificationManagement
             return emailResult;
         }
 
-        public async Task<bool> CreateAndSendInvitationAsync(UsersInvitationDto dto)
+        public async Task<bool> CreateAndSendInvitationAsync(UsersInvitationDto dto, Guid senderUserId)
         {
             var existingInvitation = await _context.UsersInvitations.AsNoTracking().FirstOrDefaultAsync(u => u.Id == dto.Id);
             if (existingInvitation != null) throw new InvalidOperationException("Duplicate invitation attempt.");
 
             var existing = await _context.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Email == dto.Email);
             if (existing != null) throw new InvalidOperationException("This email already exist");
+
+            var activePendingInvitations = await _context.UsersInvitations
+                .CountAsync(u => u.SenderUserId == senderUserId && u.Status == InvitationStatus.Pending && u.ExpiresAt > DateTime.UtcNow);
+            if (activePendingInvitations >= MaxPendingInvitationsPerSender) return false;
 
             var dateNow = DateTime.UtcNow;
 
@@ -102,7 +107,7 @@ namespace HabityFit.BLL._02.UsersVerificationManagement
                 UpdatedAt = dateNow,
                 Email = dto.Email,
                 Token = Guid.NewGuid(),
-                SenderUserId = dto.SenderUserId,
+                SenderUserId = senderUserId,
                 ExpiresAt = dateNow.AddDays(2),
                 Status = InvitationStatus.Pending,
                 Sended = false,
@@ -124,7 +129,9 @@ namespace HabityFit.BLL._02.UsersVerificationManagement
         public async Task<LoginResponseDto?> AcceptInvitationAsync(Guid token, string fullName, string password)
         {
             var invitation = await _context.UsersInvitations.FirstOrDefaultAsync(u => u.Token == token);
-            if (invitation == null || invitation.ExpiresAt < DateTime.UtcNow)
+            if (invitation is null ||
+                invitation.Status != InvitationStatus.Pending ||
+                invitation.ExpiresAt < DateTime.UtcNow)
                 return null;
 
             var loginDto = await _userBll.CreateUserAsync(new UserDto

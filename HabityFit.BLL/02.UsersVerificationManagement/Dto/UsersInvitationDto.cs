@@ -9,8 +9,5 @@ namespace HabityFit.BLL._02.UsersVerificationManagement.Dto
 
         [JsonPropertyName("EMAIL")]
         public required string Email { get; set; }
-
-        [JsonPropertyName("SENDER_USER_ID")]
-        public Guid SenderUserId { get; set; }
     }
 }

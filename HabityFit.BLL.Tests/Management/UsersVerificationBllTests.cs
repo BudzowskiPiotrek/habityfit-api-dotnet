@@ -137,11 +137,11 @@ namespace HabityFit.BLL.Tests.Management
             var dto = new UsersInvitationDto
             {
                 Id = Guid.NewGuid(),
-                Email = "friend@test.com",
-                SenderUserId = Guid.NewGuid()
+                Email = "friend@test.com"
             };
+            var senderUserId = Guid.NewGuid();
             //---------------------------------------------------------------------------------------------------------------- Act
-            var result = await bll.CreateAndSendInvitationAsync(dto);
+            var result = await bll.CreateAndSendInvitationAsync(dto, senderUserId);
             //---------------------------------------------------------------------------------------------------------------- Assert
             result.Should().BeTrue();
 
@@ -152,7 +152,9 @@ namespace HabityFit.BLL.Tests.Management
                 persisted!.Sended.Should().BeTrue();
                 persisted.Status.Should().Be(InvitationStatus.Pending);
                 persisted.Email.Should().Be(dto.Email);
+                persisted.SenderUserId.Should().Be(senderUserId);
             }
+            _emailMock.Verify(e => e.SendEmailAsync(dto.Email, It.IsAny<string>(), It.IsAny<string>()), Times.Once);
         }
 
         [Fact]
@@ -166,11 +168,11 @@ namespace HabityFit.BLL.Tests.Management
             var dto = new UsersInvitationDto
             {
                 Id = Guid.NewGuid(),
-                Email = "friend@test.com",
-                SenderUserId = Guid.NewGuid()
+                Email = "friend@test.com"
             };
+            var senderUserId = Guid.NewGuid();
             //---------------------------------------------------------------------------------------------------------------- Act
-            var result = await bll.CreateAndSendInvitationAsync(dto);
+            var result = await bll.CreateAndSendInvitationAsync(dto, senderUserId);
             //---------------------------------------------------------------------------------------------------------------- Assert
             result.Should().BeFalse();
 
@@ -181,6 +183,7 @@ namespace HabityFit.BLL.Tests.Management
                 persisted!.Sended.Should().BeFalse();
                 persisted.Status.Should().Be(InvitationStatus.Pending);
                 persisted.Email.Should().Be(dto.Email);
+                persisted.SenderUserId.Should().Be(senderUserId);
             }
         }
 
@@ -200,16 +203,86 @@ namespace HabityFit.BLL.Tests.Management
             var dto = new UsersInvitationDto
             {
                 Id = Guid.NewGuid(),
-                Email = "existing@test.com",
-                SenderUserId = Guid.NewGuid()
+                Email = "existing@test.com"
             };
             context.Users.Add(existingUser);
             await context.SaveChangesAsync();
             var bll = new UsersVerificationBll(MockConfigWithUrls(), _emailMock.Object, _userBllMock.Object, _userRelationBllMock.Object, context, _loggerMock.Object);
             //---------------------------------------------------------------------------------------------------------------- Act
-            Func<Task> act = async () => await bll.CreateAndSendInvitationAsync(dto);
+            Func<Task> act = async () => await bll.CreateAndSendInvitationAsync(dto, Guid.NewGuid());
             //---------------------------------------------------------------------------------------------------------------- Assert
             await act.Should().ThrowAsync<InvalidOperationException>();
+        }
+
+        [Fact]
+        public async Task CreateAndSendInvitationAsync_WhenSenderAlreadyHasTenPendingInvitations_ReturnsFalse()
+        {
+            //---------------------------------------------------------------------------------------------------------------- Arrange
+            await using var context = CreateInMemoryContext();
+            var senderUserId = Guid.NewGuid();
+            for (var i = 0; i < 10; i++)
+            {
+                context.UsersInvitations.Add(new UsersInvitations
+                {
+                    Id = Guid.NewGuid(),
+                    Email = $"pending-{i}@test.com",
+                    Token = Guid.NewGuid(),
+                    SenderUserId = senderUserId,
+                    Status = InvitationStatus.Pending,
+                    ExpiresAt = DateTime.UtcNow.AddDays(2),
+                    CreatedAt = DateTime.UtcNow,
+                    Sended = true
+                });
+            }
+            await context.SaveChangesAsync();
+            var bll = new UsersVerificationBll(MockConfigWithUrls(), _emailMock.Object, _userBllMock.Object, _userRelationBllMock.Object, context, _loggerMock.Object);
+            var dto = new UsersInvitationDto
+            {
+                Id = Guid.NewGuid(),
+                Email = "new-friend@test.com"
+            };
+            //---------------------------------------------------------------------------------------------------------------- Act
+            var result = await bll.CreateAndSendInvitationAsync(dto, senderUserId);
+            //---------------------------------------------------------------------------------------------------------------- Assert
+            result.Should().BeFalse();
+            _emailMock.Verify(e => e.SendEmailAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Never);
+            (await context.UsersInvitations.CountAsync()).Should().Be(10);
+        }
+
+        [Fact]
+        public async Task CreateAndSendInvitationAsync_WhenSenderHasFewerThanTenActivePendingInvitations_AllowsNewInvitation()
+        {
+            //---------------------------------------------------------------------------------------------------------------- Arrange
+            await using var context = CreateInMemoryContext();
+            var senderUserId = Guid.NewGuid();
+            for (var i = 0; i < 10; i++)
+            {
+                context.UsersInvitations.Add(new UsersInvitations
+                {
+                    Id = Guid.NewGuid(),
+                    Email = $"pending-{i}@test.com",
+                    Token = Guid.NewGuid(),
+                    SenderUserId = senderUserId,
+                    Status = InvitationStatus.Pending,
+                    ExpiresAt = i < 8 ? DateTime.UtcNow.AddDays(-1) : DateTime.UtcNow.AddDays(2),
+                    CreatedAt = DateTime.UtcNow,
+                    Sended = true
+                });
+            }
+            await context.SaveChangesAsync();
+            var bll = new UsersVerificationBll(MockConfigWithUrls(), _emailMock.Object, _userBllMock.Object, _userRelationBllMock.Object, context, _loggerMock.Object);
+            var dto = new UsersInvitationDto
+            {
+                Id = Guid.NewGuid(),
+                Email = "new-friend@test.com"
+            };
+            _emailMock.Setup(e => e.SendEmailAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
+                      .ReturnsAsync(true);
+            //---------------------------------------------------------------------------------------------------------------- Act
+            var result = await bll.CreateAndSendInvitationAsync(dto, senderUserId);
+            //---------------------------------------------------------------------------------------------------------------- Assert
+            result.Should().BeTrue();
+            (await context.UsersInvitations.CountAsync()).Should().Be(11);
         }
         #endregion
 
