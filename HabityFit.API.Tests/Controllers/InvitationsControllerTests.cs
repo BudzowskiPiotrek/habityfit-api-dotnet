@@ -1,6 +1,5 @@
 ﻿using FluentAssertions;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Moq;
 using HabityFit.API.Common;
@@ -12,26 +11,22 @@ namespace HabityFit.Api.Tests.Controllers
 {
     public class InvitationsControllerTests
     {
-        private const string ValidToken = "fake-token-ap";
         private readonly Mock<IUsersVerificationBll> _userInvitationBll = new();
         private readonly Mock<ILogger<InvitationsController>> _logger = new();
-        private readonly IConfiguration _config = new ConfigurationBuilder()
-            .AddInMemoryCollection(new Dictionary<string, string?> { { "AppSettings:TokenAp", ValidToken } }).Build();
         private readonly InvitationsController _controller;
 
         public InvitationsControllerTests()
         {
-            _controller = new(_userInvitationBll.Object, _config, _logger.Object);
+            _controller = new(_userInvitationBll.Object, _logger.Object);
         }
 
         #region Register
         [Fact]
-        public async Task InvitationsController_Register_WhenTokenAndEmailAreValid_Returns200()
+        public async Task InvitationsController_Register_WhenEmailIsValid_Returns200()
         {
             //---------------------------------------------------------------------------------------------------------------- Arrange
             var dto = new EmailDto
             {
-                Token = ValidToken,
                 Email = "user@test.com"
             };
             _userInvitationBll.Setup(x => x.CreateAndSendValidateAsync(It.IsAny<string>()))
@@ -47,39 +42,6 @@ namespace HabityFit.Api.Tests.Controllers
         [Theory]
         [InlineData("")]
         [InlineData("   ")]
-        [InlineData("wrong-token")]
-        public async Task InvitationsController_Register_WhenTokenIsInvalid_Returns401AndDoesNotCallBll(string token)
-        {
-            //---------------------------------------------------------------------------------------------------------------- Arrange
-            var dto = new EmailDto
-            {
-                Token = token,
-                Email = "user@test.com"
-            };
-            //---------------------------------------------------------------------------------------------------------------- Act
-            var result = await _controller.Register(dto);
-            //---------------------------------------------------------------------------------------------------------------- Assert
-            var objectResult = result as ObjectResult;
-            objectResult!.StatusCode.Should().Be(401);
-            _userInvitationBll.Verify(u => u.CreateAndSendValidateAsync(It.IsAny<string>()), Times.Never);
-        }
-
-        [Fact]
-        public async Task InvitationsController_Register_WhenTokenIsInvalidAndEmailIsInvalid_Returns401()
-        {
-            //---------------------------------------------------------------------------------------------------------------- Arrange
-            var dto = new EmailDto { Token = "wrong-token", Email = "nananana" };
-            //---------------------------------------------------------------------------------------------------------------- Act
-            var result = await _controller.Register(dto);
-            //---------------------------------------------------------------------------------------------------------------- Assert
-            var objectResult = result as ObjectResult;
-            objectResult!.StatusCode.Should().Be(401);
-            _userInvitationBll.Verify(u => u.CreateAndSendValidateAsync(It.IsAny<string>()), Times.Never);
-        }
-
-        [Theory]
-        [InlineData("")]
-        [InlineData("   ")]
         [InlineData("nananana")]
         [InlineData("nananana@")]
         [InlineData("@nanana.com")]
@@ -90,7 +52,6 @@ namespace HabityFit.Api.Tests.Controllers
             //---------------------------------------------------------------------------------------------------------------- Arrange
             var dto = new EmailDto
             {
-                Token = ValidToken,
                 Email = email
             };
             //---------------------------------------------------------------------------------------------------------------- Act
@@ -108,7 +69,6 @@ namespace HabityFit.Api.Tests.Controllers
             //---------------------------------------------------------------------------------------------------------------- Arrange
             var dto = new EmailDto
             {
-                Token = ValidToken,
                 Email = "user@test.com"
             };
             _userInvitationBll.Setup(x => x.CreateAndSendValidateAsync(It.IsAny<string>()))
@@ -126,7 +86,6 @@ namespace HabityFit.Api.Tests.Controllers
             //---------------------------------------------------------------------------------------------------------------- Arrange
             var dto = new EmailDto
             {
-                Token = ValidToken,
                 Email = "user@test.com"
             };
             _userInvitationBll.Setup(x => x.CreateAndSendValidateAsync(It.IsAny<string>()))
@@ -144,7 +103,6 @@ namespace HabityFit.Api.Tests.Controllers
             //---------------------------------------------------------------------------------------------------------------- Arrange
             var dto = new EmailDto
             {
-                Token = ValidToken,
                 Email = "user@test.com"
             };
             _userInvitationBll.Setup(x => x.CreateAndSendValidateAsync(It.IsAny<string>()))

@@ -1,10 +1,10 @@
-﻿using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.RateLimiting;
-using HabityFit.API._2.Controllers.Common;
+﻿using HabityFit.API._2.Controllers.Common;
 using HabityFit.API.Common;
 using HabityFit.BLL._02.UsersVerificationManagement;
 using HabityFit.BLL._02.UsersVerificationManagement.Dto;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using System.Text.RegularExpressions;
 
 namespace HabityFit.API.Controllers.InvitationsControler
@@ -15,16 +15,14 @@ namespace HabityFit.API.Controllers.InvitationsControler
     {
         #region Fields
         private readonly IUsersVerificationBll _invitationBll;
-        private readonly IConfiguration _config;
         private static readonly Regex EmailRegex = new(@"^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$", RegexOptions.Compiled);
         #endregion
 
 
         #region Constructors
-        public InvitationsController(IUsersVerificationBll invitationBll, IConfiguration config, ILogger<InvitationsController> logger) : base(logger)
+        public InvitationsController(IUsersVerificationBll invitationBll, ILogger<InvitationsController> logger) : base(logger)
         {
             _invitationBll = invitationBll;
-            _config = config;
         }
         #endregion
 
@@ -35,18 +33,6 @@ namespace HabityFit.API.Controllers.InvitationsControler
         [AllowAnonymous]
         public async Task<IActionResult> Register([FromBody] EmailDto dto)
         {
-            var configuredToken = _config["AppSettings:TokenAp"];
-
-            if (string.IsNullOrEmpty(dto?.Token) || dto.Token != configuredToken)
-            {
-                return Unauthorized(new ApiResponse
-                {
-                    WithError = true,
-                    Message = "Invalid token",
-                    StatusCode = 401
-                });
-            }
-
             if (string.IsNullOrWhiteSpace(dto.Email) || !EmailRegex.IsMatch(dto.Email))
             {
                 return BadRequest(new ApiResponse
