@@ -1,75 +1,80 @@
-﻿using AutoMapper;
-using Microsoft.EntityFrameworkCore;
-using HabityFit.BLL._02.UserRelationManagement.Dto;
+﻿using HabityFit.BLL._02.UserRelationManagement.Dto;
 using HabityFit.DAL._1.Entity;
 using HabityFit.DAL._2.Context;
+using Microsoft.EntityFrameworkCore;
 
 namespace HabityFit.BLL._02.UserRelationManagement
 {
     public class UserRelationBll : IUserRelationBll
     {
         #region Fields
-        private readonly IMapper _mapper;
         private readonly HabityFitDbContext _context;
         #endregion
 
 
         #region Constructors
-        public UserRelationBll(HabityFitDbContext context, IMapper mapper)
+        public UserRelationBll(HabityFitDbContext context)
         {
             _context = context;
-            _mapper = mapper;
         }
         #endregion
 
 
         #region Methods
-        public async Task<bool> SyncUserRelation(UserRelationDto dto)
+        public async Task<bool> SyncUserRelation(UserRelationDto dto, Guid userId)
         {
+            if (userId == Guid.Empty)
+                return false;
+
             var existing = await _context.UsersRelations
-                .FirstOrDefaultAsync(b => b.Id == dto.Id ||
-                                         (b.UserId == dto.UserId && b.FriendId == dto.FriendId) ||
-                                         (b.UserId == dto.FriendId && b.FriendId == dto.UserId));
-            if (existing == null)
+                .FirstOrDefaultAsync(r => r.Id == dto.Id ||
+                                         (r.UserId == dto.UserId && r.FriendId == dto.FriendId) ||
+                                         (r.UserId == dto.FriendId && r.FriendId == dto.UserId) ||
+                                         (r.UserId == userId && r.FriendId == dto.FriendId) ||
+                                         (r.UserId == dto.FriendId && r.FriendId == userId));
+
+            var now = DateTime.UtcNow;
+
+            if (existing is null)
             {
-                var entity = _mapper.Map<UsersRelations>(dto);
+                if (dto.FriendId == Guid.Empty || dto.FriendId == userId)
+                    return false;
+
+                var entity = new UsersRelations
+                {
+                    Id = dto.Id == Guid.Empty ? Guid.NewGuid() : dto.Id,
+                    UserId = userId,
+                    FriendId = dto.FriendId,
+                    Status = RelationStatus.Pending,
+                    CreatedAt = now,
+                    UpdatedAt = now
+                };
                 await _context.UsersRelations.AddAsync(entity);
+                return await _context.SaveChangesAsync() > 0;
+            }
+
+            var isSender = existing.UserId == userId;
+            var isReceiver = existing.FriendId == userId;
+
+            if (!isSender && !isReceiver)
+                return false;
+
+            if (existing.Status == RelationStatus.Pending && isReceiver &&
+                dto.Status is RelationStatus.Accepted or RelationStatus.Rejected)
+            {
+                existing.Status = dto.Status;
+                existing.UpdatedAt = now;
+            }
+            else if (dto.DeletedAt is not null)
+            {
+                existing.DeletedAt = now;
+                existing.UpdatedAt = now;
             }
             else
             {
-                var existingId = existing.Id;
-                if (existing.Status == RelationStatus.Rejected)
-                {
-                    _mapper.Map(dto, existing);
-                    existingId = existing.Id;
-                    existing.Status = RelationStatus.Pending;
-                    existing.UpdatedAt = DateTime.UtcNow;
-                    _context.UsersRelations.Update(existing);
-                }
-                else if (existing.Status == RelationStatus.Pending && dto.Status == RelationStatus.Pending)
-                {
-                    if (dto.UserId != existing.UserId)
-                    {
-                        _mapper.Map(dto, existing);
-                        existingId = existing.Id;
-                        existing.Status = RelationStatus.Accepted;
-                        existing.UpdatedAt = DateTime.UtcNow;
-                        _context.UsersRelations.Update(existing);
-                    }
-                    else return true;
-                }
-                else if (dto.UpdatedAt > existing.UpdatedAt || existing.UpdatedAt == null)
-                {
-                    if (existing.DeletedAt != null && dto.DeletedAt == null)
-                    {
-                        existing.DeletedAt = null;
-                    }
-                    _mapper.Map(dto, existing);
-                    existingId = existing.Id;
-                    _context.UsersRelations.Update(existing);
-                }
-                else return true;
+                return false;
             }
+
             return await _context.SaveChangesAsync() > 0;
         }
 

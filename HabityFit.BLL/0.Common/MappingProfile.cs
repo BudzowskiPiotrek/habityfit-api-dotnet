@@ -24,7 +24,7 @@ namespace HabityFit.BLL._0.Common
         {
             CreateMap<Users, UserReadDto>().ReverseMap();
             CreateMap<UserDto, Users>();
-            CreateMap<UsersRelations, UserRelationDto>().ReverseMap();
+            CreateMap<UsersRelations, UserRelationDto>();
             CreateMap<UsersInvitations, UsersInvitationDto>().ReverseMap();
             CreateMap<BodyMeasurements, BodyMeasurementsDto>().ReverseMap();
             CreateMap<Exercise, ExercisesDto>().ReverseMap();

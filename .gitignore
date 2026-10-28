@@ -42,3 +42,4 @@ HabityFit.API/Dockerfile
 HabityFit.API/Properties/launchSettings.json
 HabityFit.API/HabityFit.http
 Dockerfile
+.dockerignore

@@ -1,6 +1,4 @@
 ﻿using AutoMapper;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
 using HabityFit.BLL._0.Sync.Dto;
 using HabityFit.BLL._02.UserRelationManagement;
 using HabityFit.BLL._02.UserRelationManagement.Dto;
@@ -31,6 +29,8 @@ using HabityFit.BLL._12.FeedEventManagement;
 using HabityFit.BLL._12.FeedEventManagement.Dto;
 using HabityFit.DAL._1.Entity;
 using HabityFit.DAL._2.Context;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 
 namespace HabityFit.BLL._0.Sync
@@ -116,16 +116,12 @@ namespace HabityFit.BLL._0.Sync
             // --- Processing of all collections ---
             await ProcessCollection(payload.Users, _userBll.SyncUser, x => x.Id.ToString(), response, x => x.Id = userId);
             await ProcessCollection(payload.BodyMeasurements, _bodyBll.SyncBody, x => x.Id.ToString(), response, x => x.IdUser = userId);
-            // --- synchronizing this data from the client is not required ---
-            //await ProcessCollection(payload.MuscleGroups, _muscleGroupBll.SyncMuscleGroup, x => x.Id.ToString(), response);
-            //await ProcessCollection(payload.Exercises, _exercisesBll.SyncExercise, x => x.Id.ToString(), response);
-            //await ProcessCollection(payload.ExerciseMuscleGroups, _exerciseMuscleBll.SyncExerciseMuscleGroup, x => x.Id.ToString(), response);
             await ProcessCollection(payload.Routines, _routineBll.SyncRoutine, x => x.Id.ToString(), response, x => x.UserId = userId);
             await ProcessCollection(payload.RoutineExercises, _routineExerciseBll.SyncRoutineExercise, x => x.Id.ToString(), response);
             await ProcessCollection(payload.WorkoutSessions, _workoutSessionBll.SyncWorkoutSession, x => x.Id.ToString(), response, x => x.UserId = userId);
             await ProcessCollection(payload.WorkoutExercises, _workoutExerciseBll.SyncWorkoutExercise, x => x.Id.ToString(), response);
             await ProcessCollection(payload.ExerciseSets, _exerciseSetBll.SyncExerciseSet, x => x.Id.ToString(), response);
-            await ProcessCollection(payload.UserRelations, _userRelationBll.SyncUserRelation, x => x.Id.ToString(), response);
+            await ProcessCollection(payload.UserRelations, x => _userRelationBll.SyncUserRelation(x, userId), x => x.Id.ToString(), response);
             await ProcessCollection(payload.RoutinesRequests, _routineRequestBll.SyncRoutineRequest, x => x.Id.ToString(), response);
             await ProcessCollection(payload.UserInvitations, _usersInvitationBll.CreateAndSendInvitationAsync, x => x.Id.ToString(), response);
             await ProcessCollection(payload.FeedEvents, _feedEventBll.SyncFeedEvent, x => x.Id.ToString(), response);
