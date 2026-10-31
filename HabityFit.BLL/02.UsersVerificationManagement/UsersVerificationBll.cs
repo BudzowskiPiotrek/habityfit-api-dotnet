@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using HabityFit.BLL._0.Common;
 using HabityFit.BLL._0.Infrastructure;
 using HabityFit.BLL._02.UserRelationManagement;
 using HabityFit.BLL._02.UsersManagement;
@@ -54,7 +55,9 @@ namespace HabityFit.BLL._02.UsersVerificationManagement
         #region Methods
         public async Task<bool> CreateAndSendValidateAsync(string email)
         {
-            var existing = await _context.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Email == email);
+            var normalizedEmail = EmailNormalizer.Normalize(email);
+
+            var existing = await _context.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Email == normalizedEmail);
             if (existing != null) throw new InvalidOperationException("This email already exist");
 
             var dateNow = DateTime.UtcNow;
@@ -64,7 +67,7 @@ namespace HabityFit.BLL._02.UsersVerificationManagement
                 Id = Guid.NewGuid(),
                 CreatedAt = dateNow,
                 UpdatedAt = dateNow,
-                Email = email,
+                Email = normalizedEmail,
                 Token = Guid.NewGuid(),
                 SenderUserId = null,
                 ExpiresAt = dateNow.AddDays(2),
@@ -74,11 +77,11 @@ namespace HabityFit.BLL._02.UsersVerificationManagement
 
             string htmlBody = string.Format(_htmlBodyAccept, newInvitation.Token);
 
-            bool emailResult = await _emailService.SendEmailAsync(email, "HabityFit: El destino ha pronunciado tu nombre. ¿Aceptarás la misión?", htmlBody);
+            bool emailResult = await _emailService.SendEmailAsync(normalizedEmail, "HabityFit: El destino ha pronunciado tu nombre. ¿Aceptarás la misión?", htmlBody);
 
 
             if (emailResult) newInvitation.Sended = true;
-            else _logger.LogWarning("Failed to send accept email to {Email}.", email);
+            else _logger.LogWarning("Failed to send accept email to {Email}.", normalizedEmail);
 
             await _context.UsersInvitations.AddAsync(newInvitation);
             await _context.SaveChangesAsync();
@@ -88,10 +91,12 @@ namespace HabityFit.BLL._02.UsersVerificationManagement
 
         public async Task<bool> CreateAndSendInvitationAsync(UsersInvitationDto dto, Guid senderUserId)
         {
+            var normalizedEmail = EmailNormalizer.Normalize(dto.Email);
+
             var existingInvitation = await _context.UsersInvitations.AsNoTracking().FirstOrDefaultAsync(u => u.Id == dto.Id);
             if (existingInvitation != null) throw new InvalidOperationException("Duplicate invitation attempt.");
 
-            var existing = await _context.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Email == dto.Email);
+            var existing = await _context.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Email == normalizedEmail);
             if (existing != null) throw new InvalidOperationException("This email already exist");
 
             var activePendingInvitations = await _context.UsersInvitations
@@ -105,7 +110,7 @@ namespace HabityFit.BLL._02.UsersVerificationManagement
                 Id = dto.Id,
                 CreatedAt = dateNow,
                 UpdatedAt = dateNow,
-                Email = dto.Email,
+                Email = normalizedEmail,
                 Token = Guid.NewGuid(),
                 SenderUserId = senderUserId,
                 ExpiresAt = dateNow.AddDays(2),
@@ -115,10 +120,10 @@ namespace HabityFit.BLL._02.UsersVerificationManagement
 
             string htmlBody = string.Format(_htmlBodyInvitation, newInvitation.Token);
 
-            bool emailResult = await _emailService.SendEmailAsync(dto.Email, "HabityFit: El destino ha pronunciado tu nombre. ¿Aceptarás la misión?", htmlBody);
+            bool emailResult = await _emailService.SendEmailAsync(normalizedEmail, "HabityFit: El destino ha pronunciado tu nombre. ¿Aceptarás la misión?", htmlBody);
 
             if (emailResult) newInvitation.Sended = true;
-            else _logger.LogWarning("Failed to send invitation email to {Email}.", dto.Email);
+            else _logger.LogWarning("Failed to send invitation email to {Email}.", normalizedEmail);
 
             await _context.UsersInvitations.AddAsync(newInvitation);
             await _context.SaveChangesAsync();

@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using HabityFit.BLL._0.Common;
 using HabityFit.BLL._02.UsersManagement.Dto;
 using HabityFit.DAL._1.Entity;
 using HabityFit.DAL._2.Context;
@@ -40,7 +41,7 @@ namespace HabityFit.BLL._1.Security
         {
             if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(password))
                 throw new UnauthorizedAccessException("Email and password must be provided.");
-            var normalizedEmail = email.Trim().ToLower();
+            var normalizedEmail = EmailNormalizer.Normalize(email);
             // Verify user credentials
             var log = new Logs
             {

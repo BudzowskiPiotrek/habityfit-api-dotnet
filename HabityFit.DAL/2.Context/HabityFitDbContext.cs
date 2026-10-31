@@ -67,6 +67,14 @@ namespace HabityFit.DAL._2.Context
 
         private static void ConfigureIndexes(ModelBuilder modelBuilder)
         {
+            modelBuilder.Entity<Users>()
+                .HasIndex(u => u.Email)
+                .IsUnique();
+
+            modelBuilder.Entity<UsersInvitations>()
+                .HasIndex(i => i.Token)
+                .IsUnique();
+
             modelBuilder.Entity<Routines>()
                 .HasIndex(r => new
                 {

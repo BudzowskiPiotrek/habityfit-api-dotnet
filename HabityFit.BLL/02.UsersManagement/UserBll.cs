@@ -1,6 +1,7 @@
 ﻿
 using AutoMapper;
 using Microsoft.EntityFrameworkCore;
+using HabityFit.BLL._0.Common;
 using HabityFit.BLL._02.UsersManagement.Dto;
 using HabityFit.BLL._1.Security;
 using HabityFit.DAL._1.Entity;
@@ -72,7 +73,7 @@ namespace HabityFit.BLL._02.UsersManagement
 
         public async Task<LoginResponseDto?> CreateUserAsync(UserDto user)
         {
-            var normalizedEmail = user.Email.ToLower().Trim();
+            var normalizedEmail = EmailNormalizer.Normalize(user.Email);
             var existingUser = await _context.Users.FirstOrDefaultAsync(u => u.Email == normalizedEmail);
             if (existingUser != null) throw new InvalidOperationException("User with this email already exists.");
 
