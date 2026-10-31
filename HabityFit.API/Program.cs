@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Serilog;
+using System.Net;
 using HabityFit.BLL._0.Common;
 using HabityFit.BLL._0.Infrastructure;
 using HabityFit.BLL._0.Sync;
@@ -104,8 +105,9 @@ builder.Services.Configure<ForwardedHeadersOptions>(options =>
 {
     options.ForwardedHeaders = Microsoft.AspNetCore.HttpOverrides.ForwardedHeaders.XForwardedFor | Microsoft.AspNetCore.HttpOverrides.ForwardedHeaders.XForwardedProto;
 
-    options.KnownNetworks.Clear();
-    options.KnownProxies.Clear();
+    options.ForwardLimit = 1;
+    options.KnownProxies.Add(IPAddress.Loopback);
+    options.KnownProxies.Add(IPAddress.IPv6Loopback);
 });
 //------------------------------------------------------------------------------------------ Configure Rate Limiting --------------------------
 builder.Services.AddRateLimiter(options =>
@@ -115,7 +117,7 @@ builder.Services.AddRateLimiter(options =>
         var remoteIp = context.Connection.RemoteIpAddress?.ToString() ?? "unknown";
 
         return RateLimitPartition.GetFixedWindowLimiter(
-            partitionKey: context.User?.Identity?.Name ?? remoteIp,
+            partitionKey: remoteIp,
             factory: partition => new FixedWindowRateLimiterOptions
             {
                 PermitLimit = 10,
