@@ -32,6 +32,7 @@ namespace HabityFit.API.Controllers.SyncController
         #region Methods
 
         [HttpPost("push")]
+        [RequestSizeLimit(300_000)]
         public async Task<IActionResult> Push([FromBody] SyncPayloadDto payload)
         {
             if (!ModelState.IsValid)

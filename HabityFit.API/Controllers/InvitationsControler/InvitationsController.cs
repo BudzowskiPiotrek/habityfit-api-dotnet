@@ -2,6 +2,7 @@
 using HabityFit.API.Common;
 using HabityFit.BLL._02.UsersVerificationManagement;
 using HabityFit.BLL._02.UsersVerificationManagement.Dto;
+using HabityFit.BLL._1.Security;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
@@ -73,6 +74,17 @@ namespace HabityFit.API.Controllers.InvitationsControler
         [AllowAnonymous]
         public async Task<IActionResult> Accept([FromBody] AcceptInvitationDto dto)
         {
+            var passwordErrors = PasswordPolicy.Validate(dto.Password);
+            if (passwordErrors.Count > 0)
+            {
+                return BadRequest(new ApiResponse
+                {
+                    WithError = true,
+                    Message = string.Join(" ", passwordErrors),
+                    StatusCode = 400
+                });
+            }
+
             try
             {
                 var result = await _invitationBll.AcceptInvitationAsync(dto.Token, dto.FullName, dto.Password);

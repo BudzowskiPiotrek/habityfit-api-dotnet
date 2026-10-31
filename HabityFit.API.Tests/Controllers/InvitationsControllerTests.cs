@@ -116,6 +116,26 @@ namespace HabityFit.Api.Tests.Controllers
         #endregion
 
         #region Accept 
+        [Theory]
+        [InlineData("corta")]
+        [InlineData("habityfit123")]
+        public async Task InvitationsController_Accept_WhenPasswordIsWeak_Returns400AndDoesNotCallBll(string password)
+        {
+            //---------------------------------------------------------------------------------------------------------------- Arrange
+            var dto = new AcceptInvitationDto
+            {
+                Token = Guid.NewGuid(),
+                FullName = "fake-fullname",
+                Password = password
+            };
+            //---------------------------------------------------------------------------------------------------------------- Act
+            var result = await _controller.Accept(dto);
+            //---------------------------------------------------------------------------------------------------------------- Assert
+            var objectResult = result as ObjectResult;
+            objectResult!.StatusCode.Should().Be(400);
+            _userInvitationBll.Verify(u => u.AcceptInvitationAsync(It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<string>()), Times.Never);
+        }
+
         [Fact]
         public async Task InvitationsController_Accept_WhenBllReturnsDto_Returns200WithToken()
         {

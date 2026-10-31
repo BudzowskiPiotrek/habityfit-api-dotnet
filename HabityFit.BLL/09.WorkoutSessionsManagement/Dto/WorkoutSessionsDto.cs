@@ -1,4 +1,6 @@
-﻿using System.Text.Json.Serialization;
+﻿using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
+using HabityFit.BLL._0.Common;
 
 namespace HabityFit.BLL._09.WorkoutSessionsManagement.Dto
 {
@@ -25,6 +27,7 @@ namespace HabityFit.BLL._09.WorkoutSessionsManagement.Dto
         [JsonPropertyName("DURATION")]
         public int DurationMinutes { get; set; }
 
+        [MaxLength(ValidationLimits.WorkoutSession.NotesMaxLength)]
         [JsonPropertyName("NOTES")]
         public string? Notes { get; set; }
     }

@@ -1,4 +1,6 @@
-﻿using HabityFit.DAL._1.Entity;
+﻿using HabityFit.BLL._0.Common;
+using HabityFit.DAL._1.Entity;
+using System.ComponentModel.DataAnnotations;
 using System.Text.Json.Serialization;
 
 namespace HabityFit.BLL._02.UsersManagement.Dto
@@ -17,9 +19,11 @@ namespace HabityFit.BLL._02.UsersManagement.Dto
         [JsonPropertyName("DELETED_AT")]
         public DateTime? DeletedAt { get; set; }
 
+        [MaxLength(ValidationLimits.User.EmailMaxLength)]
         [JsonPropertyName("EMAIL")]
         public string Email { get; set; } = string.Empty;
 
+        [MaxLength(ValidationLimits.User.FullNameMaxLength)]
         [JsonPropertyName("NAME")]
         public string FullName { get; set; } = string.Empty;
 

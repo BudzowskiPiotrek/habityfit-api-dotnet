@@ -1,4 +1,6 @@
-﻿using System.Text.Json.Serialization;
+﻿using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
+using HabityFit.BLL._0.Common;
 
 namespace HabityFit.BLL._07.RoutinesManagement.Dto
 {
@@ -19,9 +21,11 @@ namespace HabityFit.BLL._07.RoutinesManagement.Dto
         [JsonPropertyName("USER_ID")]
         public Guid UserId { get; set; }
 
+        [MaxLength(ValidationLimits.Routine.NameMaxLength)]
         [JsonPropertyName("NAME")]
         public string Name { get; set; } = string.Empty;
 
+        [MaxLength(ValidationLimits.Routine.DescriptionMaxLength)]
         [JsonPropertyName("DESCRIPTION")]
         public string? Description { get; set; }
     }

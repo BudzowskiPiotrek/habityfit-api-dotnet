@@ -1,4 +1,6 @@
-﻿using System.Text.Json.Serialization;
+﻿using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
+using HabityFit.BLL._0.Common;
 
 namespace HabityFit.BLL._05.MuscleGroupsManagement.Dto
 {
@@ -16,9 +18,11 @@ namespace HabityFit.BLL._05.MuscleGroupsManagement.Dto
         [JsonPropertyName("DELETED_AT")]
         public DateTime? DeletedAt { get; set; }
 
+        [MaxLength(ValidationLimits.MuscleGroup.NameMaxLength)]
         [JsonPropertyName("NAME")]
         public string Name { get; set; } = string.Empty;
 
+        [MaxLength(ValidationLimits.MuscleGroup.DescriptionMaxLength)]
         [JsonPropertyName("DESCRIPTION")]
         public string? Description { get; set; }
 

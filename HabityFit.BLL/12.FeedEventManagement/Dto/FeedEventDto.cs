@@ -1,4 +1,6 @@
-﻿using System.Text.Json.Serialization;
+﻿using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
+using HabityFit.BLL._0.Common;
 
 namespace HabityFit.BLL._12.FeedEventManagement.Dto
 {
@@ -28,6 +30,7 @@ namespace HabityFit.BLL._12.FeedEventManagement.Dto
         [JsonPropertyName("METRIC_VALUE")]
         public double? MetricValue { get; set; } = null;
 
+        [MaxLength(ValidationLimits.Feed.CustomTextMaxLength)]
         [JsonPropertyName("CUSTOM_TEXT")]
         public string? CustomText { get; set; } = null;
     }
