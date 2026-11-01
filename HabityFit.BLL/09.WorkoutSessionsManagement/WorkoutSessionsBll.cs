@@ -24,20 +24,27 @@ namespace HabityFit.BLL._09.WorkoutSessionsManagement
 
 
         #region Methods
-        public async Task<bool> SyncWorkoutSession(WorkoutSessionsDto dto)
+        public async Task<bool> SyncWorkoutSession(WorkoutSessionsDto dto, Guid userId)
         {
             var existing = await _context.WorkoutSessions
-                .FirstOrDefaultAsync(w => w.Id == dto.Id ||
-                                         (w.UserId == dto.UserId && w.Date == dto.Date));
+                .FirstOrDefaultAsync(w => w.Id == dto.Id);
+
+            if (existing != null && existing.UserId != userId)
+                return false;
+
+            existing ??= await _context.WorkoutSessions
+                .FirstOrDefaultAsync(w => w.UserId == userId && w.Date == dto.Date);
 
             if (existing == null)
             {
                 var entity = _mapper.Map<WorkoutSessions>(dto);
+                entity.UserId = userId;
                 await _context.WorkoutSessions.AddAsync(entity);
             }
             else
             {
                 var existingId = existing.Id;
+                var ownerId = existing.UserId;
                 if (existing.DeletedAt != null && dto.DeletedAt == null)
                 {
                     existing.DeletedAt = null;
@@ -47,6 +54,7 @@ namespace HabityFit.BLL._09.WorkoutSessionsManagement
                 {
                     _mapper.Map(dto, existing);
                     existing.Id = existingId;
+                    existing.UserId = ownerId;
                     _context.WorkoutSessions.Update(existing);
                 }
                 else

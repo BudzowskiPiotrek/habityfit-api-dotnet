@@ -2,6 +2,6 @@
 {
     public interface IBodyMeasurementsBll
     {
-        Task<bool> SyncBody(BodyMeasurementsDto dto);
+        Task<bool> SyncBody(BodyMeasurementsDto dto, Guid userId);
     }
 }

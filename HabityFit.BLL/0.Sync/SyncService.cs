@@ -115,10 +115,10 @@ namespace HabityFit.BLL._0.Sync
 
             // --- Processing of all collections ---
             await ProcessCollection(payload.Users, _userBll.SyncUser, x => x.Id.ToString(), response, x => x.Id = userId);
-            await ProcessCollection(payload.BodyMeasurements, _bodyBll.SyncBody, x => x.Id.ToString(), response, x => x.IdUser = userId);
-            await ProcessCollection(payload.Routines, _routineBll.SyncRoutine, x => x.Id.ToString(), response, x => x.UserId = userId);
+            await ProcessCollection(payload.BodyMeasurements, x => _bodyBll.SyncBody(x, userId), x => x.Id.ToString(), response);
+            await ProcessCollection(payload.Routines, x => _routineBll.SyncRoutine(x, userId), x => x.Id.ToString(), response);
             await ProcessCollection(payload.RoutineExercises, _routineExerciseBll.SyncRoutineExercise, x => x.Id.ToString(), response);
-            await ProcessCollection(payload.WorkoutSessions, _workoutSessionBll.SyncWorkoutSession, x => x.Id.ToString(), response, x => x.UserId = userId);
+            await ProcessCollection(payload.WorkoutSessions, x => _workoutSessionBll.SyncWorkoutSession(x, userId), x => x.Id.ToString(), response);
             await ProcessCollection(payload.WorkoutExercises, _workoutExerciseBll.SyncWorkoutExercise, x => x.Id.ToString(), response);
             await ProcessCollection(payload.ExerciseSets, _exerciseSetBll.SyncExerciseSet, x => x.Id.ToString(), response);
             await ProcessCollection(payload.UserRelations, x => _userRelationBll.SyncUserRelation(x, userId), x => x.Id.ToString(), response);

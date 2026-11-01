@@ -24,19 +24,27 @@ namespace HabityFit.BLL._03.BodyMeasurementsManagement
 
 
         #region Methods
-        public async Task<bool> SyncBody(BodyMeasurementsDto dto)
+        public async Task<bool> SyncBody(BodyMeasurementsDto dto, Guid userId)
         {
             var existing = await _context.BodyMeasurements
-                .FirstOrDefaultAsync(b => b.Id == dto.Id || (b.IdUser == dto.IdUser && b.Date == dto.Date));
+                .FirstOrDefaultAsync(b => b.Id == dto.Id);
+
+            if (existing != null && existing.IdUser != userId)
+                return false;
+
+            existing ??= await _context.BodyMeasurements
+                .FirstOrDefaultAsync(b => b.IdUser == userId && b.Date == dto.Date);
 
             if (existing == null)
             {
                 var entity = _mapper.Map<BodyMeasurements>(dto);
+                entity.IdUser = userId;
                 await _context.BodyMeasurements.AddAsync(entity);
             }
             else
             {
                 var existingId = existing.Id;
+                var ownerId = existing.IdUser;
                 if (existing.DeletedAt != null && dto.DeletedAt == null)
                 {
                     existing.DeletedAt = null;
@@ -46,6 +54,7 @@ namespace HabityFit.BLL._03.BodyMeasurementsManagement
                 {
                     _mapper.Map(dto, existing);
                     existing.Id = existingId;
+                    existing.IdUser = ownerId;
                     _context.BodyMeasurements.Update(existing);
                 }
                 else

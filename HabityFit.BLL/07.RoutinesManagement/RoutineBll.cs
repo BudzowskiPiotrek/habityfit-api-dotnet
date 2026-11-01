@@ -24,23 +24,29 @@ namespace HabityFit.BLL._07.RoutinesManagement
 
 
         #region Methods
-        public async Task<bool> SyncRoutine(RoutineDto dto)
+        public async Task<bool> SyncRoutine(RoutineDto dto, Guid userId)
         {
             var existing = await _context.Routines.FirstOrDefaultAsync(r => r.Id == dto.Id);
             if (existing == null)
             {
                 var entity = _mapper.Map<Routines>(dto);
+                entity.UserId = userId;
                 await _context.Routines.AddAsync(entity);
             }
             else
             {
+                if (existing.UserId != userId)
+                    return false;
+
                 if (existing.DeletedAt != null && dto.DeletedAt == null)
                 {
                     existing.DeletedAt = null;
                 }
                 if (dto.UpdatedAt > existing.UpdatedAt || existing.UpdatedAt == null)
                 {
+                    var ownerId = existing.UserId;
                     _mapper.Map(dto, existing);
+                    existing.UserId = ownerId;
                     _context.Routines.Update(existing);
                 }
                 else
