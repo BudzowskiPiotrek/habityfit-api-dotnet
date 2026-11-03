@@ -27,51 +27,97 @@ namespace HabityFit.BLL._07.RoutineRequestManagement
 
 
         #region Methods
-        public async Task<bool> SyncRoutineRequest(RoutineRequestDto dto)
+        public async Task<bool> SyncRoutineRequest(RoutineRequestDto dto, Guid userId)
         {
             var existing = await _context.RoutineRequests
                 .FirstOrDefaultAsync(r => r.Id == dto.Id ||
-                                         (r.SenderId == dto.SenderId &&
+                                         (r.SenderId == userId &&
                                           r.ReceiverId == dto.ReceiverId &&
                                           r.RoutineId == dto.RoutineId));
 
             if (existing == null)
             {
-                var entity = _mapper.Map<RoutineRequests>(dto);
-                await _context.RoutineRequests.AddAsync(entity);
-            }
-            else
-            {
-                var existingId = existing.Id;
-                if (existing.Status == RequestStatus.Rejected)
-                {
-                    _mapper.Map(dto, existing);
-                    existing.Id = existingId;
-                    existing.Status = RequestStatus.Pending;
-                    existing.UpdatedAt = DateTime.UtcNow;
-                    _context.RoutineRequests.Update(existing);
-                }
-                else if (dto.UpdatedAt > existing.UpdatedAt || existing.UpdatedAt == null)
-                {
-                    if (existing.DeletedAt != null && dto.DeletedAt == null)
-                    {
-                        existing.DeletedAt = null;
-                    }
+                if (dto.ReceiverId == Guid.Empty || dto.ReceiverId == userId)
+                    return false;
 
-                    if (dto.Status == RequestStatus.Accepted)
-                    {
-                        var copy = await _routine.CloneRoutineForUserAsync(existing.RoutineId, existing.ReceiverId);
-                        if (!copy) return false;
-                    }
-                    _mapper.Map(dto, existing);
-                    existing.Id = existingId;
-                    _context.RoutineRequests.Update(existing);
-                }
-                else
-                {
-                    return true;
-                }
+                var ownsRoutine = await _context.Routines
+                    .AnyAsync(r => r.Id == dto.RoutineId && r.UserId == userId);
+
+                if (!ownsRoutine)
+                    return false;
+
+                var entity = _mapper.Map<RoutineRequests>(dto);
+                entity.SenderId = userId;
+                entity.Status = RequestStatus.Pending;
+                await _context.RoutineRequests.AddAsync(entity);
+                return await _context.SaveChangesAsync() > 0;
             }
+
+            var isSender = existing.SenderId == userId;
+            var isReceiver = existing.ReceiverId == userId;
+
+            if (!isSender && !isReceiver)
+                return false;
+
+            if (existing.SenderId != dto.SenderId ||
+                existing.ReceiverId != dto.ReceiverId ||
+                existing.RoutineId != dto.RoutineId)
+            {
+                return false;
+            }
+
+            if (existing.Status == RequestStatus.Rejected &&
+                isSender &&
+                dto.Status == RequestStatus.Pending)
+            {
+                existing.Status = RequestStatus.Pending;
+                existing.DeletedAt = null;
+                existing.UpdatedAt = DateTime.UtcNow;
+                return await _context.SaveChangesAsync() > 0;
+            }
+
+            if (existing.UpdatedAt != null &&
+                (dto.UpdatedAt == null || dto.UpdatedAt <= existing.UpdatedAt))
+            {
+                return true;
+            }
+
+            if (dto.DeletedAt is not null)
+            {
+                if (existing.DeletedAt is null)
+                {
+                    existing.DeletedAt = DateTime.UtcNow;
+                    existing.UpdatedAt = DateTime.UtcNow;
+                    return await _context.SaveChangesAsync() > 0;
+                }
+
+                return true;
+            }
+
+            if (dto.Status == existing.Status)
+                return true;
+
+            if (existing.Status != RequestStatus.Pending || !isReceiver)
+                return false;
+
+            if (dto.Status == RequestStatus.Accepted)
+            {
+                var ownsRoutine = await _context.Routines
+                    .AnyAsync(r => r.Id == existing.RoutineId && r.UserId == existing.SenderId);
+
+                if (!ownsRoutine)
+                    return false;
+
+                if (!await _routine.CloneRoutineForUserAsync(existing.RoutineId, existing.ReceiverId))
+                    return false;
+            }
+            else if (dto.Status != RequestStatus.Rejected)
+            {
+                return false;
+            }
+
+            existing.Status = dto.Status;
+            existing.UpdatedAt = DateTime.UtcNow;
             return await _context.SaveChangesAsync() > 0;
         }
         #endregion

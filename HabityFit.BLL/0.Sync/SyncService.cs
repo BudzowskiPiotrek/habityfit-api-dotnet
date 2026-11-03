@@ -122,9 +122,9 @@ namespace HabityFit.BLL._0.Sync
             await ProcessCollection(payload.WorkoutExercises, _workoutExerciseBll.SyncWorkoutExercise, x => x.Id.ToString(), response);
             await ProcessCollection(payload.ExerciseSets, _exerciseSetBll.SyncExerciseSet, x => x.Id.ToString(), response);
             await ProcessCollection(payload.UserRelations, x => _userRelationBll.SyncUserRelation(x, userId), x => x.Id.ToString(), response);
-            await ProcessCollection(payload.RoutinesRequests, _routineRequestBll.SyncRoutineRequest, x => x.Id.ToString(), response);
+            await ProcessCollection(payload.RoutinesRequests, x => _routineRequestBll.SyncRoutineRequest(x, userId), x => x.Id.ToString(), response);
             await ProcessCollection(payload.UserInvitations, x => _usersInvitationBll.CreateAndSendInvitationAsync(x, userId), x => x.Id.ToString(), response);
-            await ProcessCollection(payload.FeedEvents, _feedEventBll.SyncFeedEvent, x => x.Id.ToString(), response);
+            await ProcessCollection(payload.FeedEvents, x => _feedEventBll.SyncFeedEvent(x, userId), x => x.Id.ToString(), response);
 
             // --- Logging ---
             await LogSyncResult(userId, response);

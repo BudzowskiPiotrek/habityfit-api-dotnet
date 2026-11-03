@@ -4,6 +4,6 @@ namespace HabityFit.BLL._12.FeedEventManagement
 {
     public interface IFeedEventBll
     {
-        Task<bool> SyncFeedEvent(FeedEventDto dto);
+        Task<bool> SyncFeedEvent(FeedEventDto dto, Guid userId);
     }
 }

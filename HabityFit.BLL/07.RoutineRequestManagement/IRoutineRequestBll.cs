@@ -4,6 +4,6 @@ namespace HabityFit.BLL._07.RoutineRequestManagement
 {
     public interface IRoutineRequestBll
     {
-        Task<bool> SyncRoutineRequest(RoutineRequestDto dto);
+        Task<bool> SyncRoutineRequest(RoutineRequestDto dto, Guid userId);
     }
 }
