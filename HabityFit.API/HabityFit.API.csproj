@@ -15,6 +15,8 @@
   <ItemGroup>
     <ProjectReference Include="..\HabityFit.BLL\HabityFit.BLL.csproj" />
     <ProjectReference Include="..\HabityFit.DAL\HabityFit.DAL.csproj" />
+    <ProjectReference Include="..\Page.BLL\Page.BLL.csproj" />
+    <ProjectReference Include="..\Page.DAL\Page.DAL.csproj" />
   </ItemGroup>
 
   <ProjectExtensions><VisualStudio><UserProperties appsettings_1development_1json__JsonSchema="" /></VisualStudio></ProjectExtensions>

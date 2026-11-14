@@ -4,4 +4,6 @@
   <Project Path="HabityFit.DAL/HabityFit.DAL.csproj" />
   <Project Path="HabityFit.API.Tests/HabityFit.API.Tests.csproj" />
   <Project Path="HabityFit.API/HabityFit.API.csproj" />
+  <Project Path="Page.DAL/Page.DAL.csproj" />
+  <Project Path="Page.BLL/Page.BLL.csproj" />
 </Solution>

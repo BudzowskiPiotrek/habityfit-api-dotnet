@@ -1,9 +1,4 @@
 ﻿using AutoMapper;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.IdentityModel.Tokens;
-using Serilog;
-using System.Net;
 using HabityFit.BLL._0.Common;
 using HabityFit.BLL._0.Infrastructure;
 using HabityFit.BLL._0.Sync;
@@ -24,6 +19,12 @@ using HabityFit.BLL._10.WorkoutExercisesManagement;
 using HabityFit.BLL._11.ExerciseSetsManagement;
 using HabityFit.BLL._12.FeedEventManagement;
 using HabityFit.DAL._2.Context;
+using Page.DAL._2.Context;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using Serilog;
+using System.Net;
 using System.Text;
 using System.Threading.RateLimiting;
 //---------------------------------------------------------------------------------------------------------------------------------------------
@@ -55,6 +56,9 @@ builder.Services.AddCors(options =>
 //------------------------------------------------------------------------------------------ Configure Database Context ----------------------
 builder.Services.AddDbContext<HabityFitDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("PostgreConnection")));
+
+builder.Services.AddDbContext<PageDbContext>(options =>
+    options.UseNpgsql(builder.Configuration.GetConnectionString("PostgreConnectionPage")));
 //------------------------------------------------------------------------------------------ Configure AutoMapper -----------------------------
 builder.Services.AddSingleton(provider => new MapperConfiguration(cfg =>
 {
@@ -179,9 +183,13 @@ else
 {
     app.UseCors("ProductionPolicy");
     app.UseHttpsRedirection();
+
+    app.UseDefaultFiles();   // "/" -> "/index.html"
+    app.UseStaticFiles();    // wwwroot
+
+    app.UseRouting();        // Ensures routing executes before authentication and authorization
 }
 //---------------------------------------------------------------------------------------------------------------------------------------------
-app.UseRouting();        // Ensures routing executes before authentication and authorization
 app.UseRateLimiter();    // Ensures rate limiting executes before authorization to protect endpoints
 app.UseAuthentication(); // Ensures authentication executes before authorization
 app.UseAuthorization();  // Ensures authorization executes after authentication and rate limiting
