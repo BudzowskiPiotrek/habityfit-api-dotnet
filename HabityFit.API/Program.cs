@@ -19,10 +19,11 @@ using HabityFit.BLL._10.WorkoutExercisesManagement;
 using HabityFit.BLL._11.ExerciseSetsManagement;
 using HabityFit.BLL._12.FeedEventManagement;
 using HabityFit.DAL._2.Context;
-using Page.DAL._2.Context;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Page.BLL._1.VideosManagement;
+using Page.DAL._2.Context;
 using Serilog;
 using System.Net;
 using System.Text;
@@ -79,6 +80,7 @@ builder.Services.AddScoped<IRoutineExercisesBll, RoutineExercisesBll>();
 builder.Services.AddScoped<IBodyMeasurementsBll, BodyMeasurementsBll>();
 builder.Services.AddScoped<IWorkoutExercisesBll, WorkoutExercisesBll>();
 builder.Services.AddScoped<IExerciseMuscleGroupBll, ExerciseMuscleGroupBll>();
+builder.Services.AddScoped<IVideosBll, VideosBll>();
 //------------------------------------------------------------------------------------------ Dependency Injection Services --------------------
 builder.Services.AddScoped<ISyncService, SyncService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
@@ -140,6 +142,22 @@ builder.Services.AddRateLimiter(options =>
                 PermitLimit = 5,
                 Window = TimeSpan.FromHours(24),
                 QueueLimit = 0
+            });
+    });
+    options.AddPolicy("PagePublic", context =>
+    {
+        var remoteIp = context.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+
+        return RateLimitPartition.GetSlidingWindowLimiter(
+            partitionKey: remoteIp,
+            factory: partition => new SlidingWindowRateLimiterOptions
+            {
+                PermitLimit = 40,
+                Window = TimeSpan.FromMinutes(1),
+                SegmentsPerWindow = 6,
+                QueueLimit = 0,
+                QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
+                AutoReplenishment = true
             });
     });
     options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;

@@ -1,9 +1,10 @@
-﻿<Solution>
+<Solution>
   <Project Path="HabityFit.BLL.Tests/HabityFit.BLL.Tests.csproj" />
   <Project Path="HabityFit.BLL/HabityFit.BLL.csproj" />
   <Project Path="HabityFit.DAL/HabityFit.DAL.csproj" />
   <Project Path="HabityFit.API.Tests/HabityFit.API.Tests.csproj" />
   <Project Path="HabityFit.API/HabityFit.API.csproj" />
-  <Project Path="Page.DAL/Page.DAL.csproj" />
   <Project Path="Page.BLL/Page.BLL.csproj" />
+  <Project Path="Page.DAL/Page.DAL.csproj" />
+  <Project Path="Page.BLL.Tests/Page.BLL.Tests.csproj" />
 </Solution>
