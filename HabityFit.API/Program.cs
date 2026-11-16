@@ -23,6 +23,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Page.BLL._1.VideosManagement;
+using Page.BLL._2.CvManagement;
 using Page.DAL._2.Context;
 using Serilog;
 using System.Net;
@@ -81,6 +82,7 @@ builder.Services.AddScoped<IBodyMeasurementsBll, BodyMeasurementsBll>();
 builder.Services.AddScoped<IWorkoutExercisesBll, WorkoutExercisesBll>();
 builder.Services.AddScoped<IExerciseMuscleGroupBll, ExerciseMuscleGroupBll>();
 builder.Services.AddScoped<IVideosBll, VideosBll>();
+builder.Services.AddScoped<ICvBll, CvBll>();
 //------------------------------------------------------------------------------------------ Dependency Injection Services --------------------
 builder.Services.AddScoped<ISyncService, SyncService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
